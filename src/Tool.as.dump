@@ -1,0 +1,228 @@
+package  
+{
+	import dl.ifc.DlButton;
+	import dl.ifc.DlToolBox;
+	import dl.ifc.SelectedBox;
+	import dl.ifc.UndoButton;
+	import flash.display.*;
+	import flash.events.*;
+	import flash.geom.*;
+	import flash.sampler.NewObjectSample;
+	import flash.text.*;
+	/**
+	 * ...
+	 * @author Petrovic Veljko
+	 */
+	public class Tool extends Sprite
+	{
+		
+		
+		private var sky:Bitmap = new Library.Sky();
+		private var sky2:Bitmap = new Library.Sky2();
+		private var graph:Bitmap = new Library.Sky();
+		private var canvas:Canvas = new Canvas();
+		
+		
+		private var out:TextField = new TextField();
+		private var out2:TextField = new TextField();
+		
+		private var sx:Number = 52 / canvas.r.width;
+		private var sy:Number = 28/canvas.r.height
+		private var m:Matrix = new Matrix(sx, 0, 0, sy, -canvas.r.x * sx, -canvas.r.y * sy)
+		
+		//public var db:DlToolBox = new DlToolBox();
+		public var toolBox:DlToolBox = new DlToolBox();
+		public var selectBox:SelectedBox = new SelectedBox();
+		private var sb:SettingBox = new SettingBox();
+		public var ub:UndoButton = new UndoButton();
+		public var panel:Panel;
+		
+		public var infoBar:InfoBar = new InfoBar();
+		public var powerBar:PowerBar = new PowerBar();
+		
+		public var cC:CustomCursor = new CustomCursor();
+		public function Tool() 
+		{
+			trace("Tool");
+			//out.autoSize = TextFieldAutoSize.LEFT;
+			//out2.autoSize = TextFieldAutoSize.LEFT;
+			graph.width = 880;
+			graph.height = 670;
+			addChild(graph);
+			addChild(canvas);
+			canvas.calc.shapes = canvas.shapes;
+			//powerBar.scaleX = powerBar.scaleY =.8
+			powerBar.x = 890;
+			powerBar.y = 8;
+			addChild(powerBar);
+			//out.y = 550;
+			//out2.y = 570;
+			//addChild(out);
+			//addChild(out2);
+			//addEventListener("addShapeToCalc", addShapeToCalc);
+			
+			addChild(toolBox);
+			
+			sb.addEventListener("switchBackground", switchBackground);
+			toolBox.addEventListener(MouseEvent.MOUSE_UP, mUp);
+			toolBox.y = canvas.r.top+2;
+			toolBox.x = canvas.r.right - 192;
+			selectBox.y = canvas.r.top +2;
+			selectBox.x = canvas.r.right -32;
+			addChild(selectBox);
+			ub.x = canvas.r.left + 3 + 32;
+			ub.y = canvas.r.top + 2;
+			ub.filters = [dBW.BW()];
+			ub.mouseEnabled = false;
+			ub.addEventListener("undoEvent",undoButton)
+			canvas.undo.button = ub;
+			addChild(ub);
+			
+			sb.x = canvas.r.left+3;
+			sb.y = canvas.r.top+2;
+			addChild(sb);
+			canvas.settingBox = sb;
+			//sb.y = 32;
+			panel = new Panel(canvas.r);
+			addChild(panel);
+			addEventListener(Event.CHANGE, calculationChange);
+			
+			infoBar.y = 670;
+			addChild(infoBar);
+			
+			//var bmp:Bitmap = addChild(new Bitmap(canvas.calc.m)) as Bitmap;
+			//bmp.scaleX = 1/sx;
+			//bmp.scaleY = 1 / sy;
+			//bmp.alpha = .1
+			//bmp.x = canvas.r.x;
+			//bmp.y = canvas.r.y;
+			addChild(cC);
+			calculationChange();
+			
+			if (stage) init();
+			else addEventListener(Event.ADDED_TO_STAGE, init);
+		}
+		
+		private function init(e:Event = null):void 
+		{
+			stage.scaleMode = StageScaleMode.NO_SCALE;
+			stage.align = StageAlign.TOP_LEFT;
+			
+			stage.addEventListener("changeTool", switchTool);
+			stage.addEventListener("changeType", switchType);
+
+			//dispatchEvent(new DataEvent("changeTool", true,false,"pen"));
+		}
+		private function mUp(e:MouseEvent):void {
+			e.stopPropagation();
+		}
+		private function undoButton(e:Event):void {
+			e.stopPropagation();
+			canvas.undo.popUndo();
+		}
+		private function switchBackground(e:DataEvent):void {
+			
+			switch (e.data) 
+			{
+				case "true":
+					graph.bitmapData = sky2.bitmapData.clone();
+				break;
+				case "false":
+					graph.bitmapData = sky.bitmapData.clone();
+				break;
+			}
+		}
+		private function switchType(e:DataEvent):void {
+		trace("switch type of" + canvas.selected +"selected: " + e.data);
+			if(canvas.selected)canvas.selected.shadowType = e.data;
+			
+		}
+		private function switchTool(e:DataEvent):void {
+			trace(e.target.name + " |switchTool: " + e.data );
+			switch (e.data) 
+			{
+				case "arrow":
+					dispatchEvent(new Event("resetCursor", true));
+					 
+					if (canvas.currentAction == "painting") {
+						stage.dispatchEvent(new DataEvent("setupBrush",true,false,"arrow"))
+						canvas.endPainting();
+					}
+					if (canvas.currentAction == "drawing") {
+						stage.dispatchEvent(new DataEvent("setupBrush",true,false,"arrow"))
+						canvas.endDrawing();
+					}
+					if (canvas.selected) canvas.deselectShape();
+					canvas.currentAction = "selecting";
+					canvas.startSelecting();
+					stage.dispatchEvent(new DataEvent("toolChanged", false, false, e.data));
+					//db.type.mouseEnabled = false;
+					//db.type.filters = [dBW.BW()]
+					//db.type.active = false;
+				break;
+				case "pencil":
+					dispatchEvent(new Event("penCursor", true))
+					if (canvas.currentAction == "drawing") {
+						
+						canvas.endDrawing();
+						
+					}
+					if (canvas.currentAction == "painting") {
+						dispatchEvent(new DataEvent("setupBrush",true,false,"arrow"))
+						canvas.endPainting();
+					}
+					if (canvas.currentAction == "selecting") {
+						canvas.endSelecting();
+						if (canvas.selected && (canvas.selected is ShadowRaster)) {
+							(canvas.selected as ShadowRaster).edit();
+						}
+						if (canvas.selected && (canvas.selected is ShadowShape)) {
+							canvas.selected.deselect();
+							canvas.selected = null;
+						}
+					}
+					
+					canvas.startPainting();
+					canvas.selected.select();
+					canvas.currentAction = "painting";
+					stage.dispatchEvent(new DataEvent("toolChanged", false, false, e.data));
+
+				break;
+				case "pen":
+					if (canvas.currentAction == "painting") {
+						dispatchEvent(new DataEvent("setupBrush",true,false,"arrow"))
+						canvas.endPainting();
+					}
+					if (canvas.currentAction == "selecting") {
+						canvas.endSelecting();
+					}
+					if (canvas.currentAction == "drawing" && canvas.selected.closed == true){
+						canvas.endDrawing()
+					}
+					
+					canvas.startDrawing();
+					canvas.currentAction = "drawing";
+					stage.dispatchEvent(new DataEvent("toolChanged", false, false, e.data));
+					dispatchEvent(new Event("benzeeCursor", true));
+
+				break;
+				//case "eraser":
+					//if (canvas.selected && canvas.currentAction == "painting") {
+						//
+					//}
+				//break;
+				default:
+			}
+		}
+		private function calculationChange(e:Event = null):void {
+			trace("calc change: CHANGE", canvas.shapes.length);
+			canvas.calc.m.fillRect(canvas.calc.m.rect, 0xFFFFFF);
+			for each(var sh:Shadow in canvas.shapes) {
+				canvas.calc.m.draw(sh.bitmapData, null, null, BlendMode.DARKEN, null, true);
+			}
+			canvas.calc.compute();
+		}
+		
+	}
+
+}
