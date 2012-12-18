@@ -1,2 +1,2 @@
-solaire
+Solar Analyzer
 =======
