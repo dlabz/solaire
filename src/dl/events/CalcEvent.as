@@ -13,25 +13,27 @@ package dl.events
 		public var shadow:Number;
 		public var orientation:Number;
 		public var energy:Number;
+		public var maxEnergy:Number;
 		public var design:Number;
 		
-		public function CalcEvent(type:String, shadow:Number, orientation:Number, energy:Number, design:Number, bubbles:Boolean=false, cancelable:Boolean=false) 
+		public function CalcEvent(type:String, shadow:Number, orientation:Number, energy:Number, maxEnergy:Number, design:Number, bubbles:Boolean=false, cancelable:Boolean=false) 
 		{ 
 			super(type, bubbles, cancelable);
 			this.shadow = shadow;
 			this.orientation = orientation;
 			this.energy = energy;
+			this.maxEnergy = maxEnergy;
 			this.design = design;
 		} 
 		
 		public override function clone():Event 
 		{ 
-			return new CalcEvent(type, shadow,orientation, energy,design, bubbles, cancelable);
+			return new CalcEvent(type, shadow,orientation, energy, maxEnergy,design, bubbles, cancelable);
 		} 
 		
 		public override function toString():String 
 		{ 
-			return formatToString("CalcEvent", "type", "shadow", "orientation", "energy", "design", "bubbles", "cancelable", "eventPhase"); 
+			return formatToString("CalcEvent", "type", "shadow", "orientation", "energy", "maxEnergy", "design", "bubbles", "cancelable", "eventPhase"); 
 		}
 		
 	}

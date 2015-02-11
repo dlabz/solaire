@@ -325,10 +325,11 @@ package
 			lm.tx = mouseX;
 			lm.ty = mouseY;
 			b.draw(brush, lm, null, brushBlendMode);
-			if (parent)
+			if (parent){
 				parent.addEventListener(MouseEvent.MOUSE_MOVE, mMov);
 				parent.addEventListener(MouseEvent.MOUSE_UP, mUp);
-			//stage.addEventListener(Event.EXIT_FRAME, mMov);
+			}
+				//stage.addEventListener(Event.EXIT_FRAME, mMov);
 		
 		}
 		

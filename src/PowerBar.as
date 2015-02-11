@@ -50,21 +50,24 @@ package
 			//trace("//TODO: PowerBar -> update -> " + e.energy);
 			//var c:Calculate = e.relatedObject as Calculate;
 			
-			
+			trace("calcEvent", e);
 			var s:Number = ((e.shadow * 100));
-			var p:Number = (1 - e.orientation )//*s
-			var h:Number = 482 * (1-p);
+			var t:Number = (1 - e.orientation );// * s;
+			
+			//TODO: formula for h max 482
+			
+			var h:Number = 482 * ( 1 - e.energy/600);
+			var p:Number =( 482-h)/482;
 			trace("//TODO: PowerBar -> update -> " + s + " " + p + " " + h);
 			g.clear();
 			g.beginFill(0x999999, .5);
 			g.moveTo(36, 28);
 			g.curveTo(47.5, 10, 59, 28);
 			g.lineTo(59, 28+h);
-			g.curveTo(47.5, (28-17*p + h), 36, 28+h);
+			g.curveTo(47.5, (28+ h-18*p ), 36, 28+h);
 			g.endFill();
 			
 		}
-		
 	}
 
 }

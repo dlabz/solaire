@@ -49,6 +49,7 @@ package
 		public var shadow:Number = 0;
 		public var orientation:Number = 0;
 		public var energy:Number = 600;
+		public var maxEnergy:Number = 600;
 		public var design:Number = 1;
 		
 		public var yearSum:Number = 0;
@@ -116,11 +117,16 @@ package
 		 */
 		public function compute():void {
 
+			var yearMax:Number = 0;
+			var summerMax:Number = 0;
+			var poolMax:Number = 0;
+			var shadowMax:Number = 0;
+			
 			yearSum = 0;
 			summerSum = 0;
 			poolSum = 0;
 			shadowSum = 0;
-			
+			maxEnergy = 600
 			
 			/*
 			 * I'm laying out a united shadow from all objects in an immaginary table / EXEL document... 
@@ -145,6 +151,11 @@ package
 					//addChild a value of this cell to a number representing an average coverage of the collector by shadows 
 					shadowSum += valueShadow;
 					
+					//DEBUG: checking the max values
+					yearMax += valueData1;
+					summerMax += valueData2;
+					poolMax += valueData3;
+					
 					//multiply the value of this cell with values from matching cells in each of our tables....
 					yearSum 	+= valueData1 * valueShadow;//data1
 					summerSum 	+= valueData2 * valueShadow;//data2
@@ -152,7 +163,9 @@ package
 				}
 				
 			}
-			
+			trace("yearMax", yearMax,"yearSum", yearSum);
+			trace("summerMax", summerMax, "summerSum", summerSum);
+			trace("poolMax", poolMax,"poolSum", poolSum);
 			//
 			
 			//this function takes an average coverage, and gives an reciprocic value, that we use to represent "Shadow" value in out app
@@ -161,11 +174,11 @@ package
 			
 			//to calculate the energy, we take the relevant shadow and Orieentation, and get energy
 			function energyCalc(s:Number, o:Number):Number 
-			{	return s / 100  * (1 - o) * 600 };
+			{	return s / 100  * (1 - o) * maxEnergy };
 							
 			//to get the design, we follow this formula
 			function designCalc(s:Number, o:Number):Number
-			{	return 600 / (  s / 100 * ( 1 - o ) * 600); };
+			{	return maxEnergy / (  s / 100 * ( 1 - o ) * maxEnergy); };
 
 			
 			//if heating has been selected, calculate the values using these parameters..
@@ -173,6 +186,7 @@ package
 			if (heating) { //combine
 				trace('calculating heating');
 				shadow  	= shadowCalc(summerSum);//Data 2
+				maxEnergy 	= 600;
 				energy 		= energyCalc(summerSum, orientation);//data2
 				design		= designCalc(yearSum, orientation);//data1
 			}else {
@@ -183,12 +197,14 @@ package
 						//and the pool heating are needed
 						trace('calculating combine');
 						shadow  	= shadowCalc(shadowSum);//we'll use shadow to calculate the shadow,
+						maxEnergy	= 600;
 						energy 		= energyCalc(summerSum, orientation);// data2 to calculate energy
 						design		= designCalc(summerSum, orientation);//and again Data2 to calculate design
 					}else { //hot watter
 						//But if hot water is being used, yet no pool...
 						trace('calculating water');
 						shadow  	= shadowCalc(summerSum); // shadow is calculated using data2
+						maxEnergy	= 600;
 						energy 		= energyCalc(summerSum, orientation);//energy using data2
 						design		= designCalc(summerSum, orientation);//and design using data2
 					}
@@ -198,12 +214,13 @@ package
 						//But only the pool...
 						trace('calculating pool');
 						shadow  	= shadowCalc(poolSum);//we'll use data3 for shadow,
-						energy 		= 250;				  //a fixed value for the energy
+						maxEnergy	= 250;
+						energy 		= energyCalc(poolSum, orientation);//a fixed value for the energy
 						design		= designCalc(poolSum, orientation);// and data 3 for the design
 					}
 				}
 			}
-			if (par) par.dispatchEvent(new CalcEvent(CalcEvent.CHANGE, shadow, orientation, energy, design));
+			if (par) par.dispatchEvent(new CalcEvent(CalcEvent.CHANGE, shadow, orientation, energy, maxEnergy , design));
 		
 		}
 		
